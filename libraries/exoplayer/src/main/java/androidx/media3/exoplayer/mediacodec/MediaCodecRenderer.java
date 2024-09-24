@@ -1267,7 +1267,7 @@ public abstract class MediaCodecRenderer extends BaseRenderer {
         || getClock().elapsedRealtime() - renderStartTimeMs < renderTimeLimitMs;
   }
 
-  private boolean hasOutputBuffer() {
+  protected boolean hasOutputBuffer() {
     return outputIndex >= 0;
   }
 
