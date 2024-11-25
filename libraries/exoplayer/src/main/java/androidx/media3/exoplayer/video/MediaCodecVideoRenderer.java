@@ -170,6 +170,7 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer
   private @C.VideoChangeFrameRateStrategy int changeFrameRateStrategy;
   private long droppedFrameAccumulationStartTimeMs;
   private int droppedFrames;
+  private long consecutiveDroppedFrameAccumulationStartTimeMs;
   private int consecutiveDroppedFrameCount;
   private int buffersInCodecCount;
   private long totalVideoFrameProcessingOffsetUs;
@@ -831,7 +832,7 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer
       }
     }
     maybeSetupTunnelingForFirstFrame();
-    consecutiveDroppedFrameCount = 0;
+    maybeNotifyConsecutiveDroppedFrames();
   }
 
   @Override
@@ -870,6 +871,7 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer
   @Override
   protected void onStopped() {
     maybeNotifyDroppedFrames();
+    maybeNotifyConsecutiveDroppedFrames();
     maybeNotifyVideoFrameProcessingOffset();
     if (videoSink != null) {
       videoSink.onRendererStopped();
@@ -1789,7 +1791,7 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer
     codec.releaseOutputBuffer(index, true);
     TraceUtil.endSection();
     decoderCounters.renderedOutputBufferCount++;
-    consecutiveDroppedFrameCount = 0;
+    maybeNotifyConsecutiveDroppedFrames();
     if (videoSink == null) {
       maybeNotifyVideoSizeChanged(decodedVideoSize);
       maybeNotifyRenderedFirstFrame();
@@ -1810,7 +1812,7 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer
     codec.releaseOutputBuffer(index, releaseTimeNs);
     TraceUtil.endSection();
     decoderCounters.renderedOutputBufferCount++;
-    consecutiveDroppedFrameCount = 0;
+    maybeNotifyConsecutiveDroppedFrames();
     if (videoSink == null) {
       maybeNotifyVideoSizeChanged(decodedVideoSize);
       maybeNotifyRenderedFirstFrame();
@@ -1943,6 +1945,17 @@ public class MediaCodecVideoRenderer extends MediaCodecRenderer
       droppedFrames = 0;
       droppedFrameAccumulationStartTimeMs = now;
     }
+  }
+
+  private void maybeNotifyConsecutiveDroppedFrames() {
+    // TODO: Figure out the notification threshold for consecutive dropped frames.
+    if (consecutiveDroppedFrameCount > 0) {
+      long elapsed = getClock().elapsedRealtime() - consecutiveDroppedFrameAccumulationStartTimeMs ;
+      eventDispatcher.consecutiveDroppedFrames(consecutiveDroppedFrameCount, elapsed);
+    }
+    // Always reset the counter to 0, even if the threshold is not reached.
+    consecutiveDroppedFrameCount = 0;
+    consecutiveDroppedFrameAccumulationStartTimeMs = getClock().elapsedRealtime();
   }
 
   private void maybeNotifyVideoFrameProcessingOffset() {

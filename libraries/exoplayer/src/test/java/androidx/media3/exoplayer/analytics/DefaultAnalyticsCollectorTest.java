@@ -2394,6 +2394,12 @@ public final class DefaultAnalyticsCollectorTest {
     }
 
     @Override
+    public void onDroppedVideoFrames(
+          EventTime eventTime, int consecutiveDroppedFrames, long elapsedMs) {
+      reportedEvents.add(new ReportedEvent(EVENT_CONSECUTIVE_DROPPED_VIDEO_FRAMES, eventTime));
+    }
+
+    @Override
     public void onVideoDisabled(EventTime eventTime, DecoderCounters decoderCounters) {
       reportedEvents.add(new ReportedEvent(EVENT_VIDEO_DISABLED, eventTime));
     }

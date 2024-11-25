@@ -251,6 +251,19 @@ public interface AnalyticsCollector
   void onDroppedFrames(int count, long elapsedMs);
 
   /**
+   * Called to report the number of consecutive frames dropped by the video renderer. Consecutive
+   * dropped frames are reported when a frame is renderered after a the previous consecutive frames
+   * were not rendered optionally, whenever the consecutive dropped frame count is above a specified
+   * threshold whilst the renderer is started.
+   *
+   * @param count The number of consecutive dropped frames.
+   * @param elapsedMs The duration in milliseconds over which the consecutive frames were dropped.
+   *     This duration is timed from the first dropped frame occured, until the time the renderer
+   *     rendered a frame.
+   */
+  void onConsecutiveDroppedFrames(int count, long elapsedMs);
+
+  /**
    * Called when a video decoder is released.
    *
    * @param decoderName The video decoder that was released.
